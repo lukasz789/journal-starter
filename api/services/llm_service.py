@@ -12,9 +12,35 @@ Set OPENAI_API_KEY, and optionally OPENAI_BASE_URL and OPENAI_MODEL
 in your .env file. Settings are loaded by ``api.config.Settings``.
 """
 
+import json
+
 from openai import AsyncOpenAI
 
 from api.config import get_settings
+
+
+def _normalize_llm_json(content: str) -> dict:
+    """Extract a JSON object from LLM content, tolerating code fences."""
+    cleaned = content.strip()
+
+    if cleaned.startswith("```"):
+        cleaned = cleaned.strip("`")
+        if cleaned.lower().startswith("json"):
+            cleaned = cleaned[4:].lstrip()
+
+    try:
+        payload = json.loads(cleaned)
+    except json.JSONDecodeError:
+        start = cleaned.find("{")
+        end = cleaned.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            raise
+        payload = json.loads(cleaned[start : end + 1])
+
+    if not isinstance(payload, dict):
+        raise ValueError("LLM response was not a JSON object")
+
+    return payload
 
 
 def _default_client() -> AsyncOpenAI:
@@ -52,17 +78,43 @@ async def analyze_journal_entry(
                 "summary":   str,
                 "topics":    list[str],
             }
-
-    TODO (Task 4):
-      1. If ``client is None``, call ``_default_client()`` to construct one.
-      2. Build a messages list that includes ``entry_text`` somewhere
-         (the unit tests check that the entry text reaches the LLM).
-      3. Call ``client.chat.completions.create(...)`` with a model name
-         (use ``get_settings().openai_model`` — defaults to "gpt-4o-mini").
-      4. Parse the assistant's JSON response with ``json.loads()``.
-      5. Return a dict with ``entry_id``, ``sentiment``, ``summary``, ``topics``.
     """
-    raise NotImplementedError(
-        "Task 4: implement analyze_journal_entry using the openai SDK. "
-        "See tests/test_llm_service.py for the test contract."
+    if client is None:
+        client = _default_client()
+
+    settings = get_settings()
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a journal analyzer. Reply with valid JSON only containing "
+                "sentiment, summary, and topics fields."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                "Analyze this journal entry and respond with JSON.\n\n"
+                f"Entry text:\n{entry_text}"
+            ),
+        },
+    ]
+
+    response = await client.chat.completions.create(
+        model=settings.openai_model,
+        messages=messages,
+        response_format={"type": "json_object"},
     )
+
+    content = response.choices[0].message.content
+    if content is None:
+        raise ValueError("LLM returned no content")
+
+    payload = _normalize_llm_json(content)
+
+    return {
+        "entry_id": entry_id,
+        "sentiment": payload["sentiment"],
+        "summary": payload["summary"],
+        "topics": payload["topics"],
+    }
