@@ -41,23 +41,17 @@ class EntryCreate(BaseModel):
 
     work: EntryText = Field(
         description="What did you work on today?",
-        json_schema_extra={
-            "example": "Studied FastAPI and built my first API endpoints"
-        },
+        json_schema_extra={"example": "Studied FastAPI and built my first API endpoints"},
     )
 
     struggle: EntryText = Field(
         description="What's one thing you struggled with today?",
-        json_schema_extra={
-            "example": "Understanding async/await syntax and when to use it"
-        },
+        json_schema_extra={"example": "Understanding async/await syntax and when to use it"},
     )
 
     intention: EntryText = Field(
         description="What will you study/work on tomorrow?",
-        json_schema_extra={
-            "example": "Practice PostgreSQL queries and database design"
-        },
+        json_schema_extra={"example": "Practice PostgreSQL queries and database design"},
     )
 
 
@@ -67,25 +61,19 @@ class EntryUpdate(BaseModel):
     work: OptionalEntryText = Field(
         default=None,
         description="What did you work on today?",
-        json_schema_extra={
-            "example": "Studied FastAPI and built my first API endpoints"
-        },
+        json_schema_extra={"example": "Studied FastAPI and built my first API endpoints"},
     )
 
     struggle: OptionalEntryText = Field(
         default=None,
         description="What's one thing you struggled with today?",
-        json_schema_extra={
-            "example": "Understanding async/await syntax and when to use it"
-        },
+        json_schema_extra={"example": "Understanding async/await syntax and when to use it"},
     )
 
     intention: OptionalEntryText = Field(
         default=None,
         description="What will you study/work on tomorrow?",
-        json_schema_extra={
-            "example": "Practice PostgreSQL queries and database design"
-        },
+        json_schema_extra={"example": "Practice PostgreSQL queries and database design"},
     )
 
 
