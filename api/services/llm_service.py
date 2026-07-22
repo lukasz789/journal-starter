@@ -13,8 +13,10 @@ in your .env file. Settings are loaded by ``api.config.Settings``.
 """
 
 import json
+from typing import cast
 
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 
 from api.config import get_settings
 
@@ -83,21 +85,26 @@ async def analyze_journal_entry(
         client = _default_client()
 
     settings = get_settings()
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are a journal analyzer. Reply with valid JSON only containing "
-                "sentiment, summary, and topics fields."
-            ),
-        },
-        {
-            "role": "user",
-            "content": (
-                "Analyze this journal entry and respond with JSON.\n\n"
-                f"Entry text:\n{entry_text}"
-            ),
-        },
+    messages: list[ChatCompletionMessageParam] = [
+        cast(
+            ChatCompletionMessageParam,
+            {
+                "role": "system",
+                "content": (
+                    "You are a journal analyzer. Reply with valid JSON only containing "
+                    "sentiment, summary, and topics fields."
+                ),
+            },
+        ),
+        cast(
+            ChatCompletionMessageParam,
+            {
+                "role": "user",
+                "content": (
+                    f"Analyze this journal entry and respond with JSON.\n\nEntry text:\n{entry_text}"
+                ),
+            },
+        ),
     ]
 
     response = await client.chat.completions.create(

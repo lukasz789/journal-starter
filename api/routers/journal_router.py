@@ -54,9 +54,12 @@ async def get_entry(entry_id: str, entry_service: EntryService = Depends(get_ent
 
 @router.patch("/entries/{entry_id}")
 async def update_entry(
-    entry_id: str, entry_update: EntryUpdate, entry_service: EntryService = Depends(get_entry_service)
+    entry_id: str,
+    entry_update: EntryUpdate,
+    entry_service: EntryService = Depends(get_entry_service),
 ):
-    result = await entry_service.update_entry(entry_id, entry_update)
+    payload = entry_update.model_dump(exclude_unset=True)
+    result = await entry_service.update_entry(entry_id, payload)
     if not result:
         raise HTTPException(status_code=404, detail="Entry not found")
 
