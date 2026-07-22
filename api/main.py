@@ -1,4 +1,5 @@
 import logging
+
 from fastapi import FastAPI
 
 from api.routers.journal_router import router as journal_router
